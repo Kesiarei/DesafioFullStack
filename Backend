@@ -1,0 +1,182 @@
+import express from 'express';
+import bodyParser from 'body-parser';
+import mongoose from 'mongoose';
+
+const app = express();
+app.use(bodyParser.json());
+
+const newLocal = 'mongodb://localhost:27017/todoapp';
+// Conectar ao banco de dados MongoDB
+mongoose.connect(newLocal, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log('Conexão com o MongoDB estabelecida com sucesso.');
+  })
+  .catch((error) => {
+    console.error('Erro ao conectar ao MongoDB:', error);
+  });
+
+// Definir o modelo de usuário
+const User = mongoose.model('User', new mongoose.Schema({
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+}));
+
+// Definir o modelo de tarefa (TODO)
+const Task = mongoose.model('Task', new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  description: { type: String, required: true },
+  deadline: { type: Date, required: true },
+  completed: { type: Boolean, default: false },
+  completedAt: { type: Date },
+  updatedAt: { type: Date },
+}));
+
+// Criar uma conta de usuário
+app.post('/users', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Este e-mail já está em uso.' });
+    }
+    const newUser = await User.create({ email, password });
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao criar a conta do usuário.' });
+  }
+});
+
+// Autenticação do usuário
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
+    res.json({ message: 'Login bem-sucedido.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao autenticar o usuário.' });
+  }
+});
+
+// Adicionar uma nova tarefa
+app.post('/tasks', async (req, res) => {
+  const { user, description, deadline } = req.body;
+  try {
+    const newTask = await Task.create({ user, description, deadline });
+    res.status(201).json(newTask);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao adicionar a tarefa.' });
+  }
+});
+
+// Finalizar uma tarefa
+app.put('/tasks/:id/complete', async (req, res) => {
+  const taskId = req.params.id;
+  try {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada.' });
+    }
+    if (task.completed) {
+      return res.status(400).json({ error: 'Esta tarefa já está concluída.' });
+    }
+    task.completed = true;
+    task.completedAt = new Date();
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao finalizar a tarefa.' });
+  }
+});
+
+// Editar uma tarefa
+app.put('/tasks/:id', async (req, res) => {
+  const taskId = req.params.id;
+  const { description, deadline } = req.body;
+  try {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: 'Tarefa não encontrada.' });
+    }
+    if (task.completed) {
+      return res.status(400).json({ error: 'Uma tarefa concluída não pode ser atualizada.' });
+    }
+    task.description = description;
+    task.deadline = deadline;
+    task.updatedAt = new Date();
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao atualizar a tarefa.' });
+  }
+});
+
+// Listar as tarefas do usuário
+app.get('/tasks', async (req, res) => {
+  const { user } = req.query;
+  try {
+    const tasks = await Task.find({ user }).populate('user', 'email');
+    const currentDate = new Date();
+    const taskList = tasks.map((task) => ({
+      _id: task._id,
+      user: task.user.email,
+      description: task.description,
+      deadline: task.deadline,
+      isLate: task.deadline < currentDate,
+    }));
+    res.json(taskList);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao listar as tarefas.' });
+  }
+});
+
+// Listar todas as tarefas (para administradores)
+app.get('/admin/tasks', async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  try {
+    const tasks = await Task.find()
+      .populate('user', 'email')
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ deadline: 1 });
+    const taskList = tasks.map((task) => ({
+      _id: task._id,
+      user: task.user.email,
+      description: task.description,
+      deadline: task.deadline,
+    }));
+    res.json(taskList);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao listar as tarefas.' });
+  }
+});
+
+// Filtrar tarefas atrasadas (para administradores)
+app.get('/admin/tasks/late', async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const currentDate = new Date();
+  try {
+    const tasks = await Task.find({ deadline: { $lt: currentDate } })
+      .populate('user', 'email')
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ deadline: 1 });
+    const taskList = tasks.map((task) => ({
+      _id: task._id,
+      user: task.user.email,
+      description: task.description,
+      deadline: task.deadline,
+    }));
+    res.json(taskList);
+  } catch (error) {
+    res.status(500).json({ error: 'Ocorreu um erro ao listar as tarefas atrasadas.' });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('API rodando em http://localhost:3000');
