@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TODO App</title>
+</head>
+<body>
+  <h1>TODO App</h1>
+  
+  <!-- Formulário de criação de conta -->
+  <h2>Criar Conta</h2>
+  <form id="criar-conta-form">
+    <label for="email">E-mail:</label>
+    <input type="email" id="email" required><br>
+    <label for="senha">Senha:</label>
+    <input type="password" id="senha" required><br>
+    <button type="submit">Criar Conta</button>
+  </form>
+  
+  <!-- Formulário de login -->
+  <h2>Login</h2>
+  <form id="login-form">
+    <label for="email">E-mail:</label>
+    <input type="email" id="email" required><br>
+    <label for="senha">Senha:</label>
+    <input type="password" id="senha" required><br>
+    <button type="submit">Login</button>
+  </form>
+  
+  <!-- Formulário de adição de TODO -->
+  <h2>Adicionar TODO</h2>
+  <form id="adicionar-todo-form">
+    <label for="descricao">Descrição:</label>
+    <input type="text" id="descricao" required><br>
+    <label for="prazo">Prazo:</label>
+    <input type="date" id="prazo" required><br>
+    <button type="submit">Adicionar TODO</button>
+  </form>
+  
+  <!-- Botão de finalizar TODO -->
+  <button id="finalizar-todo-btn">Finalizar TODO</button>
+  
+  <!-- Formulário de edição de TODO -->
+  <h2>Editar TODO</h2>
+  <form id="editar-todo-form">
+    <label for="descricao">Descrição:</label>
+    <input type="text" id="descricao" required><br>
+    <label for="prazo">Prazo:</label>
+    <input type="date" id="prazo" required><br>
+    <button type="submit">Editar TODO</button>
+  </form>
+  
+  <!-- Lista de TODOs -->
+  <h2>Meus TODOs</h2>
+  <ul id="meus-todos-list">
+    <!-- Aqui serão inseridos os itens da lista de TODOs -->
+  </ul>
+  
+  <!-- Formulário de filtro de TODOs atrasados -->
+  <h2>Filtrar TODOs Atrasados</h2>
+  <form id="filtrar-atrasados-form">
+    <button type="submit">Filtrar</button>
+  </form>
+  
+  <script>
+    // Função auxiliar para fazer uma requisição POST para a API
+    async function postData(url, data) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      return response.json();
+    }
+    
+    // Função auxiliar para fazer uma requisição GET para a API
+    async function getData(url) {
+      const response = await fetch(url);
+      return response.json();
+    }
+    
+    // Formulário de criação de conta
+    const criarContaForm = document.getElementById('criar-conta-form');
+    criarContaForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      
+      try {
+        const response = await postData('/api/criar-conta', { email, senha });
+        console.log(response); // Tratar a resposta da API conforme necessário
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    
+    // Formulário de login
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      
+      try {
+        const response = await postData('/api/login', { email, senha });
+        console.log(response); // Tratar a resposta da API conforme necessário
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    
+    // Formulário de adição de TODO
+    const adicionarTodoForm = document.getElementById('adicionar-todo-form');
+    adicionarTodoForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const descricao = document.getElementById('descricao').value;
+      const prazo = document.getElementById('prazo').value;
+      
+      try {
+        const response = await postData('/api/adicionar-todo', { descricao, prazo });
+        console.log(response); // Tratar a resposta da API conforme necessário
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    
+    // Botão de finalizar TODO
+    const finalizarTodoBtn = document.getElementById('finalizar-todo-btn');
+    finalizarTodoBtn.addEventListener('click', async function(event) {
+      // Lógica para finalizar um TODO
+    });
+    
+    // Formulário de edição de TODO
+    const editarTodoForm = document.getElementById('editar-todo-form');
+    editarTodoForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const descricao = document.getElementById('descricao').value;
+      const prazo = document.getElementById('prazo').value;
+      
+      try {
+        const response = await postData('/api/editar-todo', { descricao, prazo });
+        console.log(response); // Tratar a resposta da API conforme necessário
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    
+    // Formulário de filtro de TODOs atrasados
+    const filtrarAtrasadosForm = document.getElementById('filtrar-atrasados-form');
+    filtrarAtrasadosForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      try {
+        const response = await getData('/api/filtrar-atrasados');
+        console.log(response); // Tratar a resposta da API conforme necessário
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-root',
+  template: `
+    <h1>TODO App</h1>
+
+    <!-- Formulário de criação de conta -->
+    <h2>Criar Conta</h2>
+    <form (ngSubmit)="criarConta()">
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" required [(ngModel)]="conta.email"><br>
+      <label for="senha">Senha:</label>
+      <input type="password" id="senha" required [(ngModel)]="conta.senha"><br>
+      <button type="submit">Criar Conta</button>
+    </form>
+
+    <!-- Formulário de login -->
+    <h2>Login</h2>
+    <form (ngSubmit)="fazerLogin()">
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" required [(ngModel)]="login.email"><br>
+      <label for="senha">Senha:</label>
+      <input type="password" id="senha" required [(ngModel)]="login.senha"><br>
+      <button type="submit">Login</button>
+    </form>
+
+    <!-- Formulário de adição de TODO -->
+    <h2>Adicionar TODO</h2>
+    <form (ngSubmit)="adicionarTodo()">
+      <label for="descricao">Descrição:</label>
+      <input type="text" id="descricao" required [(ngModel)]="todo.descricao"><br>
+      <label for="prazo">Prazo:</label>
+      <input type="date" id="prazo" required [(ngModel)]="todo.prazo"><br>
+      <button type="submit">Adicionar TODO</button>
+    </form>
+
+    <!-- Botão de finalizar TODO -->
+    <button (click)="finalizarTodo()">Finalizar TODO</button>
+
+    <!-- Formulário de edição de TODO -->
+    <h2>Editar TODO</h2>
+    <form (ngSubmit)="editarTodo()">
+      <label for="descricao">Descrição:</label>
+      <input type="text" id="descricao" required [(ngModel)]="todo.descricao"><br>
+      <label for="prazo">Prazo:</label>
+      <input type="date" id="prazo" required [(ngModel)]="todo.prazo"><br>
+      <button type="submit">Editar TODO</button>
+    </form>
+
+    <!-- Lista de TODOs -->
+    <h2>Meus TODOs</h2>
+    <ul>
+      <li *ngFor="let item of todos">{{ item.descricao }} - {{ item.prazo }}</li>
+    </ul>
+
+    <!-- Formulário de filtro de TODOs atrasados -->
+    <h2>Filtrar TODOs Atrasados</h2>
+    <form (ngSubmit)="filtrarAtrasados()">
+      <button type="submit">Filtrar</button>
+    </form>
+  `
+})
+export class AppComponent {
+  conta = {
+    email: '',
+    senha: ''
+  };
+
+  login = {
+    email: '',
+    senha: ''
+  };
+
+  todo = {
+    descricao: '',
+    prazo: ''
+  };
+
+  todos: any[] = [];
+
+  constructor(private http: HttpClient) {}
+
+  criarConta() {
+    this.http.post('/api/criar-conta', this.conta).subscribe(response => {
+      console.log(response);
+    });
+  }
+
+  fazerLogin() {
+    this.http.post('/api/login', this.login).subscribe(response => {
+      console.log(response);
+    });
+  }
+
+  adicionarTodo() {
+    this.http.post('/api/adicionar-todo', this.todo).subscribe(response => {
+      console.log(response);
+    });
+  }
+
+  finalizarTodo() {
+    // Lógica para finalizar um TODO
+  }
+
+  editarTodo() {
+    this.http.post('/api/editar-todo', this.todo).subscribe(response => {
+      console.log(response);
+    });
+  }
+
+  filtrarAtrasados() {
+    this.http.get('/api/filtrar-atrasados').subscribe(response => {
+      console.log(response);
+    });
+  }
+}
